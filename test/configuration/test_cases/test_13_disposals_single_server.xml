@@ -129,7 +129,7 @@
         <snapshot time="20">test_13_disposals_single_server_8.[P1,P2]_-_9.[S1,S2]</snapshot>
         <snapshot time="23">test_13_disposals_single_server_8.P2_-_9.S2</snapshot>
 
-        <snapshot time="26">test_13_disposals_single_server_a.P1_-_b.S1</snapshot>
+        <snapshot time="27">test_13_disposals_single_server_a.P1_-_b.S1</snapshot>
         <snapshot time="30">test_13_disposals_single_server_a_-_b</snapshot>
 
         <snapshot time="34">test_13_disposals_single_server_c.S1_-_d.P1</snapshot>
