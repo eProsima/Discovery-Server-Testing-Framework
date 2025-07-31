@@ -271,6 +271,8 @@ endif()
 # Compilation
 ###############################################################################
 
+option(SECURITY "Whether to build with security features and test-suite" OFF)
+
 # Create the target and its dependencies, note that variable PROJECT_NAME is created by the closest project()
 # called in the current directory scope or above.
 # We must populate this variables as project sources grow
@@ -358,6 +360,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     ASIO_STANDALONE
     $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_SYSTEM_NAME}","WindowsStore">>:_WIN32_WINNT=0x0603>
     $<$<AND:$<BOOL:${WIN32}>,$<NOT:$<STREQUAL:"${CMAKE_SYSTEM_NAME}","WindowsStore">>>:_WIN32_WINNT=0x0601>
+    $<$<BOOL:${SECURITY}>:SECURITY>
     )
 
 #if (WIN32)
