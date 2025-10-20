@@ -12,9 +12,23 @@ jobs:
       # It would be desirable to have a matrix of ubuntu OS for this job, but due to the issue opened in this ticket:
       # https://github.com/orgs/community/discussions/128118 , it has been set as a single OS job.
       os-version: 'ubuntu-22.04'
-      label: 'nightly-ubuntu-ci-master'
+      label: 'nightly-ubuntu-ci-master-3.4.x'
       discovery-server-branch: 'master'
-      fastdds-branch: 'master'
+      fastdds-branch: '3.4.x'
+      ctest-args: "-LE xfail"
+      run-build: true
+      run-tests: true
+      use-ccache: false
+
+  nightly-ubuntu-ci-2_1_x:
+    uses: eProsima/Discovery-Server/.github/workflows/reusable-ubuntu-ci.yml@2.1.x
+    with:
+      # It would be desirable to have a matrix of ubuntu OS for this job, but due to the issue opened in this ticket:
+      # https://github.com/orgs/community/discussions/128118 , it has been set as a single OS job.
+      os-version: 'ubuntu-22.04'
+      label: 'nightly-ubuntu-ci-2.1.x-3.3.x'
+      discovery-server-branch: '2.1.x'
+      fastdds-branch: '3.3.x'
       ctest-args: "-LE xfail"
       run-build: true
       run-tests: true
@@ -26,9 +40,9 @@ jobs:
       # It would be desirable to have a matrix of ubuntu OS for this job, but due to the issue opened in this ticket:
       # https://github.com/orgs/community/discussions/128118 , it has been set as a single OS job.
       os-version: 'ubuntu-22.04'
-      label: 'nightly-ubuntu-ci-2.0.x-3.1.x'
+      label: 'nightly-ubuntu-ci-2.0.x-3.2.x'
       discovery-server-branch: '2.0.x'
-      fastdds-branch: '3.1.x'
+      fastdds-branch: '3.2.x'
       ctest-args: "-LE xfail"
       run-build: true
       run-tests: true
