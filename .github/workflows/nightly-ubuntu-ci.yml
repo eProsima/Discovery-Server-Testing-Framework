@@ -12,9 +12,9 @@ jobs:
       # It would be desirable to have a matrix of ubuntu OS for this job, but due to the issue opened in this ticket:
       # https://github.com/orgs/community/discussions/128118 , it has been set as a single OS job.
       os-version: 'ubuntu-22.04'
-      label: 'nightly-ubuntu-ci-master'
+      label: 'nightly-ubuntu-ci-master-3.4.x'
       discovery-server-branch: 'master'
-      fastdds-branch: 'master'
+      fastdds-branch: '3.4.x'
       ctest-args: "-LE xfail"
       run-build: true
       run-tests: true
