@@ -33,9 +33,18 @@
 
 #include <fastrtps/log/Log.h>
 
-#define LOG(x) logInfo(DISCOVERY_SERVER,x)
-#define LOG_INFO(x) logInfo(DISCOVERY_SERVER,x)
-#define LOG_WARN(x) logWarning(DISCOVERY_SERVER,x)
-#define LOG_ERROR(x) logError(DISCOVERY_SERVER,x)
+#if ENABLE_OLD_LOG_MACROS_
+    // Old log macros are kept for compatibility.
+    #define LOG(x) logInfo(DISCOVERY_SERVER,x)
+    #define LOG_INFO(x) logInfo(DISCOVERY_SERVER,x)
+    #define LOG_WARN(x) logWarning(DISCOVERY_SERVER,x)
+    #define LOG_ERROR(x) logError(DISCOVERY_SERVER,x)
+#else
+    // New log macros
+    #define LOG(x) EPROSIMA_LOG_INFO(DISCOVERY_SERVER,x)
+    #define LOG_INFO(x) EPROSIMA_LOG_INFO(DISCOVERY_SERVER,x)
+    #define LOG_WARN(x) EPROSIMA_LOG_WARNING(DISCOVERY_SERVER,x)
+    #define LOG_ERROR(x) EPROSIMA_LOG_ERROR(DISCOVERY_SERVER,x)
+#endif // ENABLE_OLD_LOG_MACROS_
 
 #endif // _EPROSIMA_IS_LOG_H_
