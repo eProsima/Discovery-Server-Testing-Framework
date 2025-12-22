@@ -96,35 +96,35 @@ the needed repositories.
     ```
 
 1.  If you installed the Discovery Server tool following the steps outlined above, you can try the
-    *HelloWorldExampleDS*.
+    *discovery_server* example.
     To run the example navigate to the following directory
 
-    ``<path/to/discovery-server-ws>/discovery-server-ws/install/discovery-server/examples/HelloWorldExampleDS``
+    ``<path/to/discovery-server-ws>/discovery-server-ws/build/fastdds/examples/cpp/discovery_server``
 
     and run
 
     ```bash
-    $ ./HelloWorldExampleDS-d --help
+    $ ./discovery_server -d --help
     ```
 
     to display the example usage instructions.
 
-    In order to test the *HelloWorldExampleDS* open three terminals and run the above command.
+    In order to test the *discovery_server* example open three terminals and run the above command.
     Then run the following command in each terminal:
     -   Terminal 1:
         ```bash
-        $ cd <path/to/discovery-server-ws>/discovery-server-ws/install/discovery-server/examples/HelloWorldExampleDS
-        $ ./HelloWorldExampleDS publisher
+        $ cd <path/to/discovery-server-ws>/discovery-server-ws/build/fastdds/examples/cpp/discovery_server
+        $ ./discovery_server publisher
         ```
     -   Terminal 2:
         ```bash
-        $ cd <path/to/discovery-server-ws>/discovery-server-ws/install/discovery-server/examples/HelloWorldExampleDS
-        $ ./HelloWorldExampleDS subscriber
+        $ cd <path/to/discovery-server-ws>/discovery-server-ws/build/fastdds/examples/cpp/discovery_server
+        $ ./discovery_server subscriber
         ```
     -   Terminal 3:
         ```bash
-        $ cd <path/to/discovery-server-ws>/discovery-server-ws/install/discovery-server/examples/HelloWorldExampleDS
-        $ ./HelloWorldExampleDS server
+        $ cd <path/to/discovery-server-ws>/discovery-server-ws/build/fastdds/examples/cpp/discovery_server
+        $ ./discovery_server server
         ```
 
 ### Windows
@@ -159,35 +159,35 @@ the needed repositories.
     ```
 
 1. If you installed the Discovery Server tool following the steps outlined above, you can try the
-    *HelloWorldExampleDS*.
+    *discovery_server* example.
     To run the example navigate to the following directory
 
-    ``<path/to/discovery-server-ws>/discovery-server-ws/install/discovery-server/examples/HelloWorldExampleDS``
+    ``<path/to/discovery-server-ws>/discovery-server-ws/build/fastdds/examples/cpp/discovery_server``
 
     and run
 
     ```bash
-    > HelloWorldExampleDS --help
+    > discovery_server  --help
     ```
 
     to display the example usage instructions.
 
-    In order to test the *HelloWorldExampleDS* open three terminals and run the above command.
+    In order to test the *discovery_server* example open three terminals and run the above command.
     Then run the following command in each terminal:
     -   Terminal 1:
         ```bash
-        > cd <path/to/discovery-server-ws>/discovery-server-ws/install/discovery-server/examples/HelloWorldExampleDS
-        > HelloWorldExampleDS publisher
+        > cd <path/to/discovery-server-ws>/discovery-server-ws/build/fastdds/examples/cpp/discovery_server
+        > discovery_server publisher
         ```
     -   Terminal 2:
         ```bash
-        > cd <path/to/discovery-server-ws>/discovery-server-ws/install/discovery-server/examples/HelloWorldExampleDS
-        > HelloWorldExampleDS subscriber
+        > cd <path/to/discovery-server-ws>/discovery-server-ws/build/fastdds/examples/cpp/discovery_server
+        > discovery_server subscriber
         ```
     -   Terminal 3:
         ```bash
-        > cd <path/to/discovery-server-ws>/discovery-server-ws/install/discovery-server/examples/HelloWorldExampleDS
-        > HelloWorldExampleDS server
+        > cd <path/to/discovery-server-ws>/discovery-server-ws/build/fastdds/examples/cpp/discovery_server
+        > discovery_server server
 
 ---
 **NOTE**
