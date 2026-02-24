@@ -482,7 +482,7 @@ def execute_validate_thread_test(
                 stop_domain = domain_arg
 
     # Execute
-    logger.debug(f'Executing process {process_id} in test {test_id} with '
+    logger.info(f'Executing process {process_id} in test {test_id} with '
                  f'command {process_args}')
     process_ret, lines = asyncio.run(run_command(process_args, my_env, kill_time))
 
