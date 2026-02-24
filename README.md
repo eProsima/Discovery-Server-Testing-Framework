@@ -67,7 +67,7 @@ To execute the tests that verify the proper operation of the Discovery Server di
 to install some Python3 modules. These can be installed using `pip`.
 
 ```bash
-pip3 install jsondiff==1.2.0 xmltodict==0.12.0 pandas==1.1.2
+pip3 install jsondiff==2.0.0 xmltodict==0.13.0 pandas==3.0.1 psutil
 ```
 
 A [discovery-server.repos](https://raw.githubusercontent.com/eProsima/Discovery-Server/master/discovery-server.repos)
