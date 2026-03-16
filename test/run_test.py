@@ -210,10 +210,15 @@ async def read_outputs(proc, num_lines):
     """
     await asyncio.gather(read_output(proc.stdout, num_lines, 0), read_output(proc.stderr, num_lines, 1))
 
-
-async def run_command(process_args, environment, timeout):
+def run_command_sync(process_args, environment, timeout):
     """
-    Execute a process and read its stream outputs asynchronously.
+    Execute a process and read its stream outputs synchronously.
+
+    This function uses subprocess.Popen instead of asyncio to avoid
+    issues with asyncio's child watcher when called from non-main
+    threads. On Python 3.12+, asyncio.run() in a non-main thread
+    cannot properly install a SIGCHLD handler, causing race conditions
+    with psutil that result in exit codes being reported as 255.
 
     :param[in] process_args List of process arguments.
     :param[in] environment List of environment variables to be used when executing the process.
@@ -221,19 +226,48 @@ async def run_command(process_args, environment, timeout):
 
     :return Tuple (process return code, lines printed on stderr stream output)
     """
-    proc = await asyncio.create_subprocess_exec(
-        *process_args,
+    proc = subprocess.Popen(
+        process_args,
         env=environment,
-        stdout=PIPE,
-        stderr=PIPE
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
     )
 
     num_lines = [0, 0]
 
+    def read_stream(stream, index):
+        """Read lines from a stream and count them."""
+        try:
+            for line in iter(stream.readline, b''):
+                if line:
+                    num_lines[index] += 1
+                    logger.info(line.decode('utf-8'))
+        except Exception:
+            pass
+
+    # Read stdout and stderr in separate threads
+    stdout_thread = threading.Thread(
+        target=read_stream, args=(proc.stdout, 0), daemon=True)
+    stderr_thread = threading.Thread(
+        target=read_stream, args=(proc.stderr, 1), daemon=True)
+    stdout_thread.start()
+    stderr_thread.start()
+
+    # Wait for the process to finish or timeout
+    process_timed_out = False
     try:
-        await asyncio.wait_for(read_outputs(proc, num_lines), timeout)
-    except asyncio.TimeoutError:
-        pass
+        proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        process_timed_out = True
+
+    # If the process already exited within the timeout, collect its exit
+    # code directly, no need to send signals.
+    if not process_timed_out:
+        stdout_thread.join(timeout=2)
+        stderr_thread.join(timeout=2)
+        proc.stdout.close()
+        proc.stderr.close()
+        return (proc.returncode, num_lines[1])
 
     # There are three kinds of processes:
     # a) Standard processes which consist of a domain participant with a XML configuration file. These
@@ -262,25 +296,40 @@ async def run_command(process_args, environment, timeout):
         # b) Fast DDS CLI in ROS2_EASY_MODE
         pass
 
+    # Wait for the parent process to exit gracefully after its child
+    # has been stopped. Only force-kill if it doesn't exit in time.
     try:
-        psutil_proc = psutil.Process(proc.pid)
-        children = psutil_proc.children(recursive=True)
-        if children:
-            for child in children:
-                if 'fast-discovery-server' in child.name():
-                     # c) Standard process
-                    logger.debug(f'Sending SIGKILL signal to: {child.pid}')
-                    child.send_signal(signal.SIGKILL)
-        else:
-            # a) Standard process
-            logger.debug(f'Sending SIGKILL signal to single process: {proc.pid}')
-            proc.kill()
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        try:
+            psutil_proc = psutil.Process(proc.pid)
+            children = psutil_proc.children(recursive=True)
+            if children:
+                for child in children:
+                    if 'fast-discovery-server' in child.name():
+                         # c) Standard process
+                        logger.debug(f'Sending SIGKILL signal to: {child.pid}')
+                        child.send_signal(signal.SIGKILL)
+            else:
+                # a) Standard process
+                logger.debug(f'Sending SIGKILL signal to single process: {proc.pid}')
+                proc.kill()
 
-    except Exception:
-        # b) Fast DDS CLI in ROS2_EASY_MODE
-        pass
+        except Exception:
+            # b) Fast DDS CLI in ROS2_EASY_MODE
+            pass
 
-    return (await proc.wait(), num_lines[1])
+        proc.wait()
+
+    # Wait for output reader threads to finish
+    stdout_thread.join(timeout=2)
+    stderr_thread.join(timeout=2)
+
+    # Close streams
+    proc.stdout.close()
+    proc.stderr.close()
+
+    return (proc.returncode, num_lines[1])
 
 
 def pass_shm_contrains():
@@ -482,9 +531,9 @@ def execute_validate_thread_test(
                 stop_domain = domain_arg
 
     # Execute
-    logger.info(f'Executing process {process_id} in test {test_id} with '
+    logger.debug(f'Executing process {process_id} in test {test_id} with '
                  f'command {process_args}')
-    process_ret, lines = asyncio.run(run_command(process_args, my_env, kill_time))
+    process_ret, lines = run_command_sync(process_args, my_env, kill_time)
 
     # Do not use communicate, as stderr is needed further in validation
 
@@ -532,7 +581,7 @@ def execute_validate_thread_test(
         process_args.append('-d')
         process_args.append(str(stop_domain))
         logger.debug(f'Killing server in domain [{stop_domain}] with process: {process_args}')
-        _, _ = asyncio.run(run_command(process_args, my_env, kill_time))
+        _, _ = run_command_sync(process_args, my_env, kill_time)
 
     # Update result_list and return
     result_list.append(result)
@@ -973,7 +1022,7 @@ if __name__ == '__main__':
         stop_args = [args.fds]
         stop_args.extend(['discovery', 'stop'])
         logger.info(f'Killing Fast DDS daemon with command: {stop_args}')
-        _, _ = asyncio.run(run_command(stop_args, None, 3))
+        _, _ = run_command_sync(stop_args, None, 3)
     else:
         logger.info('No fastdds tool process to stop')
 
