@@ -1,0 +1,11 @@
+Version 1.0.0
+=============
+
+First release.
+
+* Server creation and setup capabilities.
+* Discovery testing capabilities.
+* Single process suite of tests added.
+* Multi-process test capability added (generation and validation of snapshots serialized as XML).
+* HelloWorld example over UDP and TCP.
+* Extended schema that simplifies setup for server creation and testing purposes.

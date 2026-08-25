@@ -386,6 +386,16 @@ include(CTest)
 add_subdirectory(test)
 
 ###############################################################################
+# Documentation
+###############################################################################
+
+option(BUILD_DOCS "Build the Sphinx documentation of the testing framework" OFF)
+
+if(BUILD_DOCS)
+    add_subdirectory(docs)
+endif()
+
+###############################################################################
 # Installation
 ###############################################################################
 

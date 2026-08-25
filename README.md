@@ -227,7 +227,31 @@ description of every tag is available in the
 
 The documentation of this testing framework is hosted on
 [Read the Docs](https://eprosima-discovery-server.readthedocs.io/en/latest/), and its sources are kept in the
-[Discovery-Server-Testing-Framework-docs repository](https://github.com/eProsima/Discovery-Server-Testing-Framework-docs).
+[docs](docs) directory of this repository.
+
+The documentation is written with [Sphinx](https://www.sphinx-doc.org) and is built as part of the CMake project by
+setting the `BUILD_DOCS` option to `ON`. Its Python dependencies are listed in
+[docs/requirements.txt](docs/requirements.txt), and the spell checker needs the `enchant` library
+(`sudo apt install libenchant-2-2` on Ubuntu):
+
+```bash
+$ python3 -m venv docs-venv
+$ source docs-venv/bin/activate
+$ pip3 install -r src/discovery-server/docs/requirements.txt
+$ colcon build --base-paths src \
+        --packages-up-to discovery-server \
+        --cmake-args -DTHIRDPARTY=ON -DCOMPILE_TOOLS=ON -DINSTALL_TOOLS=ON \
+                -DBUILD_DOCS=ON
+```
+
+The generated HTML is left in the `docs/html` directory of the build tree and is installed under
+`share/doc/discovery-server/html`. The RST style and spelling checks are registered with CTest and can be run with
+`ctest -R documentation`. To work on the documentation without building the framework, [docs](docs) is also a CMake
+project of its own:
+
+```bash
+cmake -S docs -B build-docs && cmake --build build-docs && ctest --test-dir build-docs
+```
 
 The documentation of the Discovery Server discovery mechanism itself is part of the
 [Fast DDS documentation](https://fast-dds.docs.eprosima.com/en/latest/fastdds/discovery/discovery.html).
