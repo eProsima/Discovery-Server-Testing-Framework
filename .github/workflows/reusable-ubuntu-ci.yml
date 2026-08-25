@@ -234,3 +234,44 @@ jobs:
           show_failed: 'True'
           show_disabled: 'False'
           show_skipped: 'False'
+
+  discovery_server_docs:
+    runs-on: ${{ inputs.os-version }}
+    if: ${{ inputs.run-build == true }}
+    steps:
+      - name: Sync eProsima/Discovery-Server repository
+        uses: eProsima/eProsima-CI/external/checkout@v0
+        with:
+          path: src/discovery_server
+          ref: ${{ inputs.discovery-server-branch }}
+
+      - name: Install Fix Python version
+        uses: eProsima/eProsima-CI/external/setup-python@v0
+        with:
+          python-version: '3.11'
+
+      - name: Get minimum supported version of CMake
+        uses: eProsima/eProsima-CI/external/get-cmake@v0
+        with:
+          cmakeVersion: '3.22.6'
+
+      - name: Install apt dependencies
+        uses: eProsima/eProsima-CI/ubuntu/install_apt_packages@v0
+        with:
+          # Required by pyenchant, used by the documentation spell checker
+          packages: libenchant-2-2
+
+      - name: Install documentation requirements
+        uses: eProsima/eProsima-CI/ubuntu/install_documentation_requirements@v0
+        with:
+          path_to_requirements: ${{ github.workspace }}/src/discovery_server/docs/requirements.txt
+
+      # The documentation is a CMake project of its own, so it is built without the framework and its dependencies.
+      - name: Build documentation
+        run: |
+          cmake -S ${{ github.workspace }}/src/discovery_server/docs -B ${{ github.workspace }}/build/docs
+          cmake --build ${{ github.workspace }}/build/docs
+
+      - name: Run documentation tests
+        if: ${{ inputs.run-tests == true }}
+        run: ctest --test-dir ${{ github.workspace }}/build/docs --output-on-failure

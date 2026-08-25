@@ -1,0 +1,7 @@
+.. |br| raw:: html
+
+  <br/>
+
+.. Bold Fast DDS link. Usage |fastdds|_
+.. _fastdds: https://github.com/eProsima/Fast-DDS
+.. |fastdds| replace:: **Fast DDS**

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DS xmlns="http://www.eprosima.com/XMLSchemas/discovery-server" >
+  
+  <servers>
+    <server name="server" profile_name="UDP server" />
+  </servers>
+  
+  <profiles>
+    
+    <participant profile_name="UDP server">
+      <rtps>
+        <prefix>
+          4D.49.47.55.45.4c.5f.42.41.52.52.4f
+        </prefix>
+        <builtin>
+            <discovery_config>
+                <discoveryProtocol>SERVER</discoveryProtocol>
+                <leaseDuration>
+                    <sec>DURATION_INFINITY</sec>
+                </leaseDuration>
+            </discovery_config>
+            <metatrafficUnicastLocatorList>
+            <locator>
+                <udpv4>
+                <!-- UDP address placeholder -->
+                <address>192.168.1.113</address>
+                <port>64863</port>
+                </udpv4>
+            </locator>
+            </metatrafficUnicastLocatorList>
+        </builtin>        
+      </rtps>
+    </participant>
+    
+  </profiles>
+  
+</DS>
