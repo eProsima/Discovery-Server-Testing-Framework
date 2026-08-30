@@ -77,7 +77,7 @@ jobs:
           path: src/discovery_server
           ref: ${{ inputs.discovery-server-branch }}
 
-      - name: Install Fix Python version
+      - name: Install Fixed Python version
         uses: eProsima/eProsima-CI/external/setup-python@v0
         with:
           python-version: '3.11'
@@ -164,7 +164,7 @@ jobs:
       - name: 'Restore workspace'
         run: tar -xvf github_ws.tar -C ${{ github.workspace }} --strip-components=5
 
-      - name: Install Fix Python version
+      - name: Install Fixed Python version
         uses: eProsima/eProsima-CI/external/setup-python@v0
         with:
           python-version: '3.11'
