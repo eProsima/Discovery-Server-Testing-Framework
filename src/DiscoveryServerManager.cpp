@@ -31,6 +31,10 @@
 #include "LateJoiner.h"
 #include "log/DSLog.h"
 
+#ifdef SECURITY
+#include "security_helpers.hpp"
+#endif // ifdef SECURITY
+
 using namespace eprosima::fastdds;
 using namespace eprosima::discovery_server;
 
@@ -49,6 +53,9 @@ const char* TYPES = "types";
 const char* PUBLISHER = "publisher";
 const char* SUBSCRIBER = "subscriber";
 const char* TOPIC = "topic";
+const char* PROPERTIES = "properties";
+const char* PROPERTY = "property";
+const char* VALUE = "value";
 } // namespace DSxmlparser
 } // namespace fastdds
 } // namespace eprosima
@@ -60,11 +67,13 @@ const std::chrono::seconds DiscoveryServerManager::last_snapshot_delay_ = std::c
 
 DiscoveryServerManager::DiscoveryServerManager(
         const std::string& xml_file_path,
+        const std::string& security_props_file_path,
         const bool shared_memory_off)
     : no_callbacks(false)
     , auto_shutdown(true)
     , enable_prefix_validation(true)
     , correctly_created_(false)
+    , security_enabled_(false)
     , last_PDP_callback_(Snapshot::_steady_clock)
     , last_EDP_callback_(Snapshot::_steady_clock)
     , shared_memory_off_(shared_memory_off)
@@ -100,6 +109,51 @@ DiscoveryServerManager::DiscoveryServerManager(
 
         // try load the enable_prefix_validation attribute
         enable_prefix_validation = root->BoolAttribute(s_sPrefixValidation.c_str(), enable_prefix_validation);
+
+#ifdef SECURITY
+        //try load security properties if any
+        if (!security_props_file_path.empty())
+        {
+            tinyxml2::XMLDocument props_doc;
+
+            if (tinyxml2::XMLError::XML_SUCCESS == props_doc.LoadFile(security_props_file_path.c_str()))
+            {
+                tinyxml2::XMLElement* root = props_doc.FirstChildElement(eprosima::fastdds::DSxmlparser::PROPERTIES);
+                if (root != nullptr)
+                {
+                    if (!load_properties(root))
+                    {
+                        LOG_ERROR("Error loading PropertiesPolicy from properties file");
+                        return;
+                    }
+                    else
+                    {
+                        security_enabled_ = true;
+                        auto auth_property = PropertyPolicyHelper::find_property(properties_, "dds.sec.auth.builtin.PKI-DH.identity_certificate");
+                        if (auth_property == nullptr)
+                        {
+                            LOG_ERROR("No certificate path found in properties file");
+                            return;
+                        }
+                        else
+                        {
+                            auth_cert_path_ = *auth_property;
+                        }
+                    }
+                }
+                else
+                {
+                    LOG_ERROR("Error retrieving properties element from properties file");
+                    return;
+                }
+            }
+            else
+            {
+                LOG_ERROR("Could not load properties file");
+                return;
+            }
+        }
+#endif // ifdef SECURITY
 
         for (auto child = doc.FirstChildElement(s_sDS.c_str());
                 child != nullptr; child = child->NextSiblingElement(s_sDS.c_str()))
@@ -965,6 +1019,23 @@ void DiscoveryServerManager::loadServer(
     assert(b.discoveryProtocol == eprosima::fastdds::rtps::DiscoveryProtocol::SERVER ||
             b.discoveryProtocol == eprosima::fastdds::rtps::DiscoveryProtocol::BACKUP);
 
+    // Extend Participant properties if applies
+    if (!properties_.properties().empty())
+    {
+        dpQOS.properties(properties_);
+    }
+
+#ifdef SECURITY
+    // mangle GUID if security is enabled
+    if (security_enabled_)
+    {
+        GUID_t original_guid = GUID_t(guid.guidPrefix, c_EntityId_RTPSParticipant);
+        // If security is enabled, mangle GUID
+        mangle_guid(auth_cert_path_, original_guid,
+                guid);
+    }
+#endif // SECURITY
+
     // Create the participant or the associated events
     DelayedParticipantCreation event(creation_time, std::move(dpQOS), &DiscoveryServerManager::addServer);
     if (creation_time == getTime())
@@ -1171,6 +1242,12 @@ void DiscoveryServerManager::loadClient(
         dpQOS.transport().user_transports.push_back(udp_transport);
     }
 
+    // Extend Participant properties if applies
+    if (!properties_.properties().empty())
+    {
+        dpQOS.properties(properties_);
+    }
+
     GUID_t guid(dpQOS.wire_protocol().prefix, c_EntityId_RTPSParticipant);
     DelayedParticipantDestruction* destruction_event = nullptr;
     DelayedParticipantCreation* creation_event = nullptr;
@@ -1274,6 +1351,12 @@ void DiscoveryServerManager::loadSimple(
     if (name != nullptr)
     {
         dpQOS.name() = name;
+    }
+
+    // Extend Participant properties if applies
+    if (!properties_.properties().empty())
+    {
+        dpQOS.properties(properties_);
     }
 
     GUID_t guid(dpQOS.wire_protocol().prefix, c_EntityId_RTPSParticipant);
@@ -2155,4 +2238,28 @@ void DiscoveryServerManager::saveSnapshots(
     {
         LOG("Snapshot file saved " << file << ".");
     }
+}
+
+bool DiscoveryServerManager::load_properties(tinyxml2::XMLElement* props_n)
+{
+    bool ret = true;
+    tinyxml2::XMLElement* prop = props_n->FirstChildElement(eprosima::fastdds::DSxmlparser::PROPERTY);
+
+    for (;prop != nullptr; prop = prop->NextSiblingElement(eprosima::fastdds::DSxmlparser::PROPERTY))
+    {
+        tinyxml2::XMLElement* name = prop->FirstChildElement(eprosima::fastdds::DSxmlparser::NAME);
+        tinyxml2::XMLElement* value = prop->FirstChildElement(eprosima::fastdds::DSxmlparser::VALUE);
+
+        if (nullptr != name && nullptr != value)
+        {
+            properties_.properties().push_back({name->GetText(), value->GetText()});
+        }
+        else
+        {
+            LOG_ERROR("Missing name/value for property " << prop->GetText());
+            ret = false;
+        }
+    }
+
+    return ret;
 }

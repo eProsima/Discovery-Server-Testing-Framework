@@ -169,6 +169,20 @@ def parse_options():
         required=False,
         help='Use intraprocess transport. Default one test with each.'
     )
+    parser.add_argument(
+        '-S',
+        '--security',
+        type=str,
+        required=False,
+        help='Enable security in tests.'
+    )
+    parser.add_argument(
+        '-C',
+        '--certs-path',
+        type=str,
+        required=False,
+        help='Path to certs path directory'
+    )
 
     return parser.parse_args()
 
@@ -354,6 +368,7 @@ def execute_validate_thread_test(
     ds_tool_path,
     process_params,
     config_file,
+    properties_file,
     flags_in,
     fds_path=None,
     clear=True,
@@ -374,6 +389,7 @@ def execute_validate_thread_test(
     :param ds_tool_path: path to Discovery-Server tool.
     :param process_params: process parameters.
     :param config_file: xml file for default configuration of FastDDS.
+    :param properties_file: path to extra properties file to use with the DS tool.
     :param flags_in: auxiliary flags to use with the DS tool.
     :param fds_path: path to fastdds tool. This arg is not needed unless
         test must execute fastdds tool, in which case it will raise an error
@@ -480,9 +496,14 @@ def execute_validate_thread_test(
     stop_domain = None  # Be sure that no stop command is called if not needed
     # Launch
     if xml_config_file is not None:
-        # Create args with config file and outputfile
-        process_args = \
-            [ds_tool_path, '-c', xml_config_file, '-o', result_file] + flags
+        if properties_file is not None:
+            # Create args with properties, config and output files
+            process_args = \
+                [ds_tool_path, '-c', xml_config_file, '-p', properties_file, '-o', result_file] + flags
+        else:
+            # Create args with config file and outputfile
+            process_args = \
+                [ds_tool_path, '-c', xml_config_file, '-o', result_file] + flags
 
     else:
         # Fastdds tool
@@ -548,6 +569,12 @@ def execute_validate_thread_test(
     # Validation needed, pass to validate_test function
     logger.debug(f'Executing validation for process {process_name}')
     validation_params = process_params['validation']
+
+    # Add security to all the entries in validation_params
+    if properties_file is not None:
+        for key in validation_params:
+            validation_params[key]["security"] = str(args.certs_path + '/mainpartcert.pem')
+
     validator_input = val.ValidatorInput(
         process_ret,
         lines,
@@ -594,6 +621,7 @@ def execute_validate_test(
     ds_tool_path,
     test_params,
     config_file,
+    properties_file,
     flags,
     fds_path=None,
     clear=True,
@@ -645,6 +673,7 @@ def execute_validate_test(
                   ds_tool_path,
                   process_config,
                   config_file,
+                  properties_file,
                   flags,
                   fds_path,
                   clear,
@@ -677,7 +706,7 @@ def execute_validate_test(
     return result
 
 
-def get_configurations(config_params, intraprocess, shm):
+def get_configurations(config_params, intraprocess, shm, security):
     """
     Extract configurations from json.
 
@@ -691,6 +720,7 @@ def get_configurations(config_params, intraprocess, shm):
     :param config_params: dictionary with configurations.
     :param intraprocess: only use intra-process as configuration file.
     :param shm: only use shared memory as default transport.
+    :param security: enable security.
 
     :return: tuple of two arrays.
         First array is an array of tuples where first
@@ -740,6 +770,24 @@ def get_configurations(config_params, intraprocess, shm):
     if shm is not None and shm:
         flags = [f for f in flags if f[0] != 'SHM_OFF']
 
+    if security is not None:
+        if os.path.isfile(config_params['properties']['SECURITY']):
+            if os.path.exists(args.certs_path):
+                properties_file = open(config_params['properties']['SECURITY'], "r+")
+                data = properties_file.read()
+                #Replace all occurrences of the required label
+                data = data.replace('<CERTS_RELATIVE_PATH>', args.certs_path)
+                properties_file.seek(0)
+                properties_file.write(data)
+                properties_file.truncate()
+                properties_file.close()
+            else:
+                logger.error('Certs path not found at ' + args.certs_path)
+                exit(1)
+        else:
+            logger.error('Properties file not found at ' + config_params['properties']['SECURITY'])
+            exit(1)
+
     flags_combinatory = []
     for i in range(1, 1+len(flags)):
         for combination in itertools.combinations(flags, i):
@@ -765,6 +813,7 @@ def create_tests(
     tests=None,
     intraprocess=None,
     shm=None,
+    security=None,
     clear=True,
     fds_path=None,
     debug=False,
@@ -786,6 +835,7 @@ def create_tests(
     :param shm: if set it specifies if shared memory is used or not.
         If None, both with and without shared memory will be executed.
         (Default: None)
+    :param security: Whether to load properties file to enable security.
     :param clear: if true remove generated files if test passes.
     :param fds_path: path to fastdds tool. This arg is not needed unless
         test must execute fastdds tool, in which case it will raise an error
@@ -816,10 +866,16 @@ def create_tests(
     config_files, flags_combinatory = get_configurations(
         config_params,
         intraprocess,
-        shm
+        shm,
+        security
     )
 
     test_results = True
+
+    if security is not None and security:
+        properties_file = config_params['properties']['SECURITY']
+    else:
+        properties_file = None
 
     # iterate over parameters
     for test_name, test in tests:
@@ -853,12 +909,18 @@ def create_tests(
                             f' with config file <{config_file}>'
                             f' and flags {flags}')
 
+                if properties_file is not None:
+                    logger.info(f'Using properties of file <{properties_file}>')
+                    for property in config_params['properties']:
+                        test_id += '.' + property
+
                 test_results &= execute_validate_test(
                         test_name,
                         test_id,
                         discovery_server_tool_path,
                         params_file[test],
                         config_file,
+                        properties_file,
                         flags,
                         fds_path,
                         clear,
@@ -1004,6 +1066,10 @@ if __name__ == '__main__':
     if shm is not None:
         shm = shared.boolean_from_string(shm)
 
+    security = args.security
+    if security is not None and security:
+        security = shared.boolean_from_string(security)
+
     result = create_tests(
         test_params,
         config_params,
@@ -1011,6 +1077,7 @@ if __name__ == '__main__':
         tests=args.test,
         intraprocess=intraprocess,
         shm=shm,
+        security=security,
         clear=not args.not_remove,
         fds_path=(args.fds if args.fds else None),
         debug=args.debug,
