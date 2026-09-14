@@ -11,6 +11,7 @@ discovery mechanism as shipped by that *Fast DDS* version.
 
 |Fast DDS Version|Testing Framework Version|Testing Framework Latest Release|
 |----------------|------------------------|-------------------------------|
+|PRO 3.8| 2.5.0 |[v2.5.0](https://github.com/eProsima/Discovery-Server-Testing-Framework/releases/tag/v2.5.0)|
 |PRO 3.7| 2.4.0 |[v2.4.0](https://github.com/eProsima/Discovery-Server-Testing-Framework/releases/tag/v2.4.0)|
 |PRO 3.6| 2.4.0 |[v2.4.0](https://github.com/eProsima/Discovery-Server-Testing-Framework/releases/tag/v2.4.0)|
 |3.6| - | - |
