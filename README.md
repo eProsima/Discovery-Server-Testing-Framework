@@ -7,6 +7,10 @@ in [eProsima Fast DDS](https://fast-dds.docs.eprosima.com/en/latest/).
 Discovery Server is part of Fast DDS, not a separate product. This project exercises that mechanism and verifies
 that it behaves as expected.
 
+> \[!WARNING]\
+> This repository is obsolete and remains alive only for the `2.14.x` and `3.2.x` branches, as described in
+> [`RELEASE_SUPPORT.md`](RELEASE_SUPPORT.md).
+
 ## Components
 
 - **`discovery-server`**: a C++ tool that deploys DDS entities from an XML scenario and records snapshots of their
