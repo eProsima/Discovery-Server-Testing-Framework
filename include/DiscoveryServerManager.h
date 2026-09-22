@@ -128,6 +128,9 @@ class DiscoveryServerManager
     // Snapshops container
     snapshots_list snapshots;
 
+    // Participant PropertiesPolicy
+    PropertyPolicy properties_;
+
     // Topic description profiles
     std::map<std::string, TopicDescriptionItem> topic_description_profiles_map;
 
@@ -135,6 +138,12 @@ class DiscoveryServerManager
     bool auto_shutdown;         // close when event processing is finished?
     bool enable_prefix_validation; // allow multiple servers share the same prefix? (only for testing purposes)
     bool correctly_created_;     // store false if the DiscoveryServerManager has not been successfully created
+    bool security_enabled_; // security enabled
+
+#ifdef SECURITY
+    // Ceritficate path
+    std::string auth_cert_path_;
+#endif // SECURITY
 
     void loadProfiles(
             tinyxml2::XMLElement* profiles);
@@ -169,6 +178,13 @@ class DiscoveryServerManager
     void saveSnapshots(
             const std::string& file) const;
 
+    /**
+    *   @brief: This method loads a set of properties into attributes
+    *   @param [in] props_n: element containig the XML properties
+    */
+    bool load_properties(
+            tinyxml2::XMLElement* props_n);
+
     // File where to save snapshots
     std::string snapshots_output_file;
     // validation required
@@ -185,6 +201,7 @@ public:
 
     DiscoveryServerManager(
             const std::string& xml_file_path,
+            const std::string& security_props_file_path,
             const bool shared_memory_off);
 
     ~DiscoveryServerManager();
